@@ -24,10 +24,7 @@ class EMLISubscriber(Node):
 		moisture_warning = self.moisture < 50
 		no_alarms = not self.water_alarm and not self.moisture_warning
 
-		if no_alarms:
-			self.toggle_green(True)
-			return
-
+		self.toggle_green(no_alarms)
 		self.toggle_yellow(moisture_warning)
 		self.toggle_red(water_alarm)
 
@@ -54,24 +51,14 @@ class EMLISubscriber(Node):
 		self.influx_client.write_points(data)
 
 	def toggle_green(self, state):
-		if state:
-			self.toggle_red(False)
-			self.toggle_yellow(False)
-
 		command = '/green/on' if state else '/green/off'
 		requests.get(self.esp_base_url + command)
 
 	def toggle_yellow(self, state):
-		if state:
-			self.toggle_green(False)
-
 		command = '/yellow/on' if state else '/yellow/off'
 		requests.get(self.esp_base_url + command)
 
 	def toggle_red(self, state):
-		if state:
-			self.toggle_green(False)
-
 		command = '/red/on' if state else '/red/off'
 		requests.get(self.esp_base_url + command)
 
