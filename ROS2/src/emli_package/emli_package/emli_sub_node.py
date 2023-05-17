@@ -12,42 +12,40 @@ class EMLISubscriber(Node):
 		'emli',
 		self.listener_callback,
 		10)
-		self.esp_url = 'http://10.42.0.222'
+		self.esp_base_url = 'http://10.42.0.222/led'
 		self.subscription # prevent unused variable warning
 		self.influx_client = InfluxDBClient(host='localhost', port=8086, database='plants')
+
 	def listener_callback(self, msg):
-		values = msg.data.split(",")
-		plant_water_alarm = int(values[0]) # 0 for no alarm
-		pump_water_alarm = int(values[1]) # 1 for alarm
-		moisture = int(values[2])
-		light = int(values[3])
+		self.set_values(msg)
+		self.save_values()
 
-		timestamp = int(self.get_clock().now().nanoseconds / 1e9)
-
-		self.save_value("plant_water_alarm", plant_water_alarm, timestamp)
-		self.save_value("pump_water_alarm", pump_water_alarm, timestamp)
-		self.save_value("moisture", moisture, timestamp)
-		self.save_value("light", light, timestamp)
-
-		water_alarm = plant_water_alarm or not pump_water_alarm
-		moisture_warning = moisture < 50
-		no_alarms = not water_alarm and not moisture_warning
+		water_alarm = self.plant_water_alarm or not self.pump_water_alarm
+		moisture_warning = self.moisture < 50
+		no_alarms = not self.water_alarm and not self.moisture_warning
 
 		if no_alarms:
 			self.toggle_green(True)
 			return
 
-		if moisture_warning:
-			self.toggle_yellow(True)
-		else:
-			self.toggle_yellow(False)
-
-		if water_alarm:
-			self.toggle_red(True)
-		else:
-			self.toggle_red(False)
+		self.toggle_yellow(moisture_warning)
+		self.toggle_red(water_alarm)
 
 		self.get_logger().info('I heard: "%s"' % values)
+
+	def set_values(self, msg):
+		values = msg.data.split(",")
+		self.plant_water_alarm = int(values[0]) # 0 for no alarm
+		self.pump_water_alarm = int(values[1]) # 1 for alarm
+		self.moisture = int(values[2])
+		self.light = int(values[3])
+		
+	def save_values(self, msg):
+		timestamp = int(self.get_clock().now().nanoseconds / 1e9)
+		self.save_value("plant_water_alarm", self.plant_water_alarm, timestamp)
+		self.save_value("pump_water_alarm", self.pump_water_alarm, timestamp)
+		self.save_value("moisture", self.moisture, timestamp)
+		self.save_value("light", self.light, timestamp)
 
 	def save_value(self, measurement, value, timestamp):
 		data = [{"measurement": measurement,
@@ -55,30 +53,27 @@ class EMLISubscriber(Node):
 			"time": timestamp}]
 		self.influx_client.write_points(data)
 
-	def toggle_red(self, state):
-		if state:
-			self.toggle_green(False)
-
-		base = '/led/red/'
-		base += 'on' if state else 'off'
-		requests.get(self.esp_url + base)
-
-	def toggle_yellow(self, state):
-		if state:
-			self.toggle_green(False)
-
-		base = '/led/yellow/'
-		base += 'on' if state else 'off'
-		requests.get(self.esp_url + base)
-
 	def toggle_green(self, state):
 		if state:
 			self.toggle_red(False)
 			self.toggle_yellow(False)
 
-		base = '/led/green/'
-		base += 'on' if state else 'off'
-		requests.get(self.esp_url + base)
+		command = '/green/on' if state else '/green/off'
+		requests.get(self.esp_base_url + command)
+
+	def toggle_yellow(self, state):
+		if state:
+			self.toggle_green(False)
+
+		command = '/yellow/on' if state else '/yellow/off'
+		requests.get(self.esp_base_url + command)
+
+	def toggle_red(self, state):
+		if state:
+			self.toggle_green(False)
+
+		command = '/red/on' if state else '/red/off'
+		requests.get(self.esp_base_url + command)
 
 def main(args=None):
 	# initialize the node
