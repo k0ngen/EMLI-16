@@ -21,6 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'emli_node = emli_package.emli_node:main',
+	    'farmer_watcher_node = emli_package.farmer_watcher_node:main',
             'emli_pub_node = emli_package.emli_pub_node:main',
             'emli_sub_node = emli_package.emli_sub_node:main',
         ],

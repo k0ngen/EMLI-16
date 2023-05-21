@@ -22,13 +22,11 @@ class EMLISubscriber(Node):
 
 		water_alarm = self.plant_water_alarm or not self.pump_water_alarm
 		moisture_warning = self.moisture < 50
-		no_alarms = not self.water_alarm and not self.moisture_warning
+		no_alarms = not water_alarm and not moisture_warning
 
 		self.toggle_green(no_alarms)
 		self.toggle_yellow(moisture_warning)
 		self.toggle_red(water_alarm)
-
-		self.get_logger().info('I heard: "%s"' % values)
 
 	def set_values(self, msg):
 		values = msg.data.split(",")
@@ -36,9 +34,9 @@ class EMLISubscriber(Node):
 		self.pump_water_alarm = int(values[1]) # 1 for alarm
 		self.moisture = int(values[2])
 		self.light = int(values[3])
-		
-	def save_values(self, msg):
-		timestamp = int(self.get_clock().now().nanoseconds / 1e9)
+
+	def save_values(self):
+		timestamp = self.get_clock().now().nanoseconds
 		self.save_value("plant_water_alarm", self.plant_water_alarm, timestamp)
 		self.save_value("pump_water_alarm", self.pump_water_alarm, timestamp)
 		self.save_value("moisture", self.moisture, timestamp)
