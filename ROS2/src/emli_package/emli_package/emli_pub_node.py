@@ -12,10 +12,13 @@ class EMLIPublisher(Node):
 		self.serial = serial.Serial('/dev/ttyACM0', 115200)
 
 	def timer_callback(self):
-		msg = String()
-		msg.data = self.serial.readline().decode().strip()
-		self.publisher_.publish(msg)
-		self.get_logger().info('Publishing: "%s"' % msg.data)
+		try:
+			msg = String()
+			msg.data = self.serial.readline().decode().strip()
+			self.publisher_.publish(msg)
+			self.get_logger().info('Publishing: "%s"' % msg.data)
+		except:
+			self.get_logger().info('Could not read data')
 
 def main(args=None):
 	# initialize the node

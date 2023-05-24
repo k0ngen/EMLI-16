@@ -3,6 +3,7 @@ from rclpy.node import Node
 from std_msgs.msg import String
 import requests
 import serial
+from influxdb import InfluxDBClient
 
 class EMLIFarmer(Node):
 	def __init__(self):
@@ -11,6 +12,7 @@ class EMLIFarmer(Node):
 		self.timer = self.create_timer(timer_period, self.timer_callback)
 		self.esp_base_url = 'http://10.42.0.222/button/a/count'
 		self.serial = serial.Serial('/dev/ttyACM0', 115200)
+		self.influx_client = InfluxDBClient(host='localhost', port=8086, database='plants')
 
 	def timer_callback(self):
 		try:
@@ -19,14 +21,25 @@ class EMLIFarmer(Node):
 			if clicks == 0:
 				return
 
-			self.pump_water()
-			# log farmer watering
+			try:
+				self.pump_water()
+			except:
+				self.pump_water()
+
+			self.log_watering()
 		except:
 			print('Failed to get result')
 
 	def pump_water(self):
 		self.serial.write(b'p')
 		self.serial.write(b'')
+
+	def log_watering(self):
+		data = [{"measurement": "watering",
+                	"fields": {"value": "farmer"},
+                	"time": self.get_clock().now().nanoseconds}]
+		self.influx_client.write_points(data)
+
 
 def main(args=None):
 	# initialize the node

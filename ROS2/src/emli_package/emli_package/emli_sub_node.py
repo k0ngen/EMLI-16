@@ -17,16 +17,19 @@ class EMLISubscriber(Node):
 		self.influx_client = InfluxDBClient(host='localhost', port=8086, database='plants')
 
 	def listener_callback(self, msg):
-		self.set_values(msg)
-		self.save_values()
+		try:
+			self.set_values(msg)
+			self.save_values()
 
-		water_alarm = self.plant_water_alarm or not self.pump_water_alarm
-		moisture_warning = self.moisture < 50
-		no_alarms = not water_alarm and not moisture_warning
+			water_alarm = self.plant_water_alarm or not self.pump_water_alarm
+			moisture_warning = self.moisture < 50
+			no_alarms = not water_alarm and not moisture_warning
 
-		self.toggle_green(no_alarms)
-		self.toggle_yellow(moisture_warning)
-		self.toggle_red(water_alarm)
+			self.toggle_green(no_alarms)
+			self.toggle_yellow(moisture_warning)
+			self.toggle_red(water_alarm)
+		except:
+			self.get_logger().info('Could not parse data')
 
 	def set_values(self, msg):
 		values = msg.data.split(",")
@@ -44,7 +47,7 @@ class EMLISubscriber(Node):
 
 	def save_value(self, measurement, value, timestamp):
 		data = [{"measurement": measurement,
-			"fields": {measurement: value},
+			"fields": {"value": value},
 			"time": timestamp}]
 		self.influx_client.write_points(data)
 
