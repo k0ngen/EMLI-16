@@ -23,7 +23,7 @@ class EMLISubscriber(Node):
 	def listener_callback(self, msg):
 		try:
 			self.set_values(msg)
-			self.save_values()
+			self.publish_values()
 
 			water_alarm = self.plant_water_alarm or not self.pump_water_alarm
 			moisture_warning = self.moisture < 50
@@ -32,8 +32,8 @@ class EMLISubscriber(Node):
 			self.toggle_green(no_alarms)
 			self.toggle_yellow(moisture_warning)
 			self.toggle_red(water_alarm)
-		except:
-			self.get_logger().info('Could not parse data')
+		except Exception as e:
+			self.get_logger().info('Could not parse data %s' % str(e))
 
 	def set_values(self, msg):
 		values = msg.data.split(",")
@@ -44,10 +44,22 @@ class EMLISubscriber(Node):
 
 	def publish_values(self):
 		timestamp = self.get_clock().now().nanoseconds
-		self.light_publisher.publish(f'{self.light},{timestamp}')
-		self.moisture_publisher.publish(f'{self.moisture},{timestamp}')
-		self.plant_water_alarm_publisher.publish(f'{self.plant_water_alarm},{timestamp}')
-		self.pump_water_alarm_publisher.publish(f'{self.pump_water_alarm},{timestamp}')
+
+		plant_water_alarm_msg = String()
+		plant_water_alarm_msg.data = str("{},{}".format(self.plant_water_alarm, timestamp))
+		self.plant_water_alarm_publisher.publish(plant_water_alarm_msg)
+
+		pump_water_alarm_msg = String()
+		pump_water_alarm_msg.data = str("{},{}".format(self.pump_water_alarm, timestamp))
+		self.pump_water_alarm_publisher.publish(pump_water_alarm_msg)
+
+		moisture_msg = String()
+		moisture_msg.data = str("{},{}".format(self.moisture, timestamp))
+		self.moisture_publisher.publish(moisture_msg)
+
+		light_msg = String()
+		light_msg.data = str("{},{}".format(self.light, timestamp))
+		self.light_publisher.publish(light_msg)
 
 	def toggle_green(self, state):
 		command = '/green/on' if state else '/green/off'

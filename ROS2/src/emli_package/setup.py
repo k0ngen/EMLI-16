@@ -20,13 +20,13 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-	        'emli_farmer_node = emli_package.emli_farmer_node:main',
+	    'emli_farmer_node = emli_package.emli_farmer_node:main',
             'emli_pub_node = emli_package.emli_pub_node:main',
             'emli_sub_node = emli_package.emli_sub_node:main',
             'emli_light_node = emli_package.emli_light_node:main',
             'emli_moisture_node = emli_package.emli_moisture_node:main',
             'emli_water_alarm_node = emli_package.emli_water_alarm_node:main',
-            'emli_pump_alarm_node = emli_package.emli_pump_alarm_node:main',
+            'emli_pump_alarm_node = emli_package.emli_pump_alarm_node:main'
         ],
     },
 )

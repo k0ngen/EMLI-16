@@ -12,7 +12,7 @@ class EMLIWaterAlarm(Node):
 		'plant_water_alarm',
 		self.listener_callback,
 		10)
-		self.subscription
+		self.subscription # prevent unused variable warning
 		self.influx_client = InfluxDBClient(host='localhost', port=8086, database='plants')
 
 	def listener_callback(self, msg):
