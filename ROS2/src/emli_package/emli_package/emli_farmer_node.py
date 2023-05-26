@@ -7,7 +7,7 @@ from influxdb import InfluxDBClient
 
 class EMLIFarmer(Node):
 	def __init__(self):
-		super().__init__('emli_farmer_node')
+		super().__init__('farmer_watcher_node')
 		timer_period = 2 # seconds
 		self.timer = self.create_timer(timer_period, self.timer_callback)
 		self.esp_base_url = 'http://10.42.0.222/button/a/count'

@@ -12,6 +12,10 @@ class EMLISubscriber(Node):
 		'emli',
 		self.listener_callback,
 		10)
+		self.light_publisher = self.create_publisher(String, 'light', 10)
+		self.moisture_publisher = self.create_publisher(String, 'moisture', 10)
+		self.plant_water_alarm_publisher = self.create_publisher(String, 'plant_water_alarm', 10)
+		self.pump_water_alarm_publisher = self.create_publisher(String, 'pump_water_alarm', 10)
 		self.esp_base_url = 'http://10.42.0.222/led'
 		self.subscription # prevent unused variable warning
 		self.influx_client = InfluxDBClient(host='localhost', port=8086, database='plants')
@@ -38,18 +42,12 @@ class EMLISubscriber(Node):
 		self.moisture = int(values[2])
 		self.light = int(values[3])
 
-	def save_values(self):
+	def publish_values(self):
 		timestamp = self.get_clock().now().nanoseconds
-		self.save_value("plant_water_alarm", self.plant_water_alarm, timestamp)
-		self.save_value("pump_water_alarm", self.pump_water_alarm, timestamp)
-		self.save_value("moisture", self.moisture, timestamp)
-		self.save_value("light", self.light, timestamp)
-
-	def save_value(self, measurement, value, timestamp):
-		data = [{"measurement": measurement,
-			"fields": {"value": value},
-			"time": timestamp}]
-		self.influx_client.write_points(data)
+		self.light_publisher.publish(f'{self.light},{timestamp}')
+		self.moisture_publisher.publish(f'{self.moisture},{timestamp}')
+		self.plant_water_alarm_publisher.publish(f'{self.plant_water_alarm},{timestamp}')
+		self.pump_water_alarm_publisher.publish(f'{self.pump_water_alarm},{timestamp}')
 
 	def toggle_green(self, state):
 		command = '/green/on' if state else '/green/off'
