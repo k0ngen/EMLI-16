@@ -1,7 +1,6 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
-from influxdb import InfluxDBClient
 import requests
 
 class EMLISubscriber(Node):
@@ -18,7 +17,6 @@ class EMLISubscriber(Node):
 		self.pump_water_alarm_publisher = self.create_publisher(String, 'pump_water_alarm', 10)
 		self.esp_base_url = 'http://10.42.0.222/led'
 		self.subscription # prevent unused variable warning
-		self.influx_client = InfluxDBClient(host='localhost', port=8086, database='plants')
 
 	def listener_callback(self, msg):
 		try:
